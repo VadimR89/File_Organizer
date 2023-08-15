@@ -48,10 +48,68 @@ registered_extensions = {
     "MOV": mov_files,
     "MKV": mkv_files
 }
+join_extensions = {
+    "JPEG": "JPEG",
+    "PNG": "PNG",
+    "JPG": "JPG",
+    "SVG": "SVG",
+    "TXT": "TXT",
+    "DOCX": "DOCX",
+    "DOC": "DOC",
+    "XLSX": "XLSX",
+    "XLS": "XLS",
+    "PDF": "PDF",
+    "PPTX": "PPTX",
+    "ZIP": "ZIP",
+    "GZ": "GZ",
+    "TAR": "TAR",
+    "AVI": "AVI",
+    "MOV": "MOV",
+    "MKV": "MKV",
+    "MP4": "MP4"
+}
+
+UKRAINIAN_SYMBOLS = 'абвгдеєжзиіїйклмнопрстуфхцчшщьюя'
+TRANSLATION = ("a", "b", "v", "g", "d", "e", "je", "zh", "z", "y", "i", "ji", "j", "k", "l", "m", "n", "o", "p",
+               "r", "s", "t", "u", "f", "h", "ts", "ch", "sh", "sch", "", "ju", "ja")
+SPECIAL_CHARACTERS = set('!@#$%^&*()+{}[]|\:;"<>,.?/~`')
+TRANS = {}
+
+for key, value in zip(UKRAINIAN_SYMBOLS, TRANSLATION):
+    TRANS[ord(key)] = value
+    TRANS[ord(key.upper())] = value.upper()
+
+
+def main():
+    scan(arg)
+    scan_result()
+    extract_archives_recursive(arg)
+    rename_files_recursively(arg)
+    find_duplicate_files(arg)
+    rename_duplicate_files(arg)
+    scan_and_move(arg, path, is_last_call=True)
+    remove_empty_folders_recursive(arg)
 
 
 def get_extensions(file_name):
     return Path(file_name).suffix[1:].upper()
+
+
+def normalize(name):
+    name, *extension = name.split('.')
+    new_name = name.translate(TRANS)
+    new_name = re.sub(r"\W+", "_", new_name)
+    return f"{new_name}.{'.'.join(extension)}"
+
+
+def create_folder_if_not_exists(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+
+def move_file_to_folder(source_path, target_folder):
+    target_path = os.path.join(target_folder, source_path.name)
+    os.rename(source_path, target_path)
 
 
 def scan(folder):
@@ -74,114 +132,90 @@ def scan(folder):
                 others.append(new_name)
 
 
-if __name__ == '__main__':
-    path = sys.argv[1]
-    print(f"Start in {path}")
+def scan_result():
+    if jpeg_files:
+        for filename in jpeg_files:
+            print(f"JPEG: {filename}")
+        print()
 
-    arg = Path(path)
-    scan(arg)
-
-if (jpeg_files):
-    for filename in jpeg_files:
-        print(f"JPEG: {filename}")
-    print()
-
-if (jpg_files):
-    for filename in jpg_files:
-        print(f"JPG: {filename}")
-    print()
-
-if (png_files):
-    for filename in png_files:
-        print(f"PNG: {filename}")
-    print()
-
-if (svg_files):
-    for filename in svg_files:
-        print(f"SVG: {filename}")
-    print()
-
-if (txt_files):
-    for filename in txt_files:
-        print(f"TXT: {filename}")
-    print()
-
-if(docx_files):
-    for filename in docx_files:
-        print(f"DOCX: {filename}")
-    print()
-
-if(doc_files):
-    for filename in doc_files:
-        print(f"DOC: {filename}")
-    print()
-
-if(xlsx_files):
-    for filename in xlsx_files:
-        print(f"XLSX: {filename}")
-    print()
-
-if(xls_files):
-    for filename in xls_files:
-        print(f"XLS: {filename}")
-    print()
-
-if(pdf_files):
-    for filename in pdf_files:
-        print(f"PDF: {filename}")
-    print()
-
-if(pptx_files):
-    for filename in pptx_files:
-        print(f"PPTX: {filename}")
-    print()
-
-if(avi_files):
-    for filename in avi_files:
-        print(f"AVI: {filename}")
-    print()
-
-if(mp4_files):
-    for filename in mp4_files:
-        print(f"MP4: {filename}")
-    print()
-
-if(mov_files):
-    for filename in mov_files:
-        print(f"MOV: {filename}")
-    print()
-
-if(mkv_files):
-    for filename in mkv_files:
-        print(f"MKV: {filename}")
-    print()
-
-if(tar_files):
-    for filename in tar_files:
-        print(f"TAR: {filename}")
-    print()
-
-if(gz_files):
-    for filename in gz_files:
-        print(f"GZ: {filename}")
-    print()
-
-if(zip_files):
-    for filename in zip_files:
-        print(f"ZIP: {filename}")
-    print()
-
-if(others):
-    for filename in others:
-        print(f"UNKNOWN: {filename}")
-    print()
-
-print(f"All extensions: {extensions}\n")
-print(f"Unknown extensions: {unknown}\n")
+    if jpg_files:
+        for filename in jpg_files:
+            print(f"JPG: {filename}")
+        print()
+    if png_files:
+        for filename in png_files:
+            print(f"PNG: {filename}")
+        print()
+    if svg_files:
+        for filename in svg_files:
+            print(f"SVG: {filename}")
+        print()
+    if txt_files:
+        for filename in txt_files:
+            print(f"TXT: {filename}")
+        print()
+    if docx_files:
+        for filename in docx_files:
+            print(f"DOCX: {filename}")
+        print()
+    if doc_files:
+        for filename in doc_files:
+            print(f"DOC: {filename}")
+        print()
+    if xlsx_files:
+        for filename in xlsx_files:
+            print(f"XLSX: {filename}")
+        print()
+    if xls_files:
+        for filename in xls_files:
+            print(f"XLS: {filename}")
+        print()
+    if pdf_files:
+        for filename in pdf_files:
+            print(f"PDF: {filename}")
+        print()
+    if pptx_files:
+        for filename in pptx_files:
+            print(f"PPTX: {filename}")
+        print()
+    if avi_files:
+        for filename in avi_files:
+            print(f"AVI: {filename}")
+        print()
+    if mp4_files:
+        for filename in mp4_files:
+            print(f"MP4: {filename}")
+        print()
+    if mov_files:
+        for filename in mov_files:
+            print(f"MOV: {filename}")
+        print()
+    if mkv_files:
+        for filename in mkv_files:
+            print(f"MKV: {filename}")
+        print()
+    if tar_files:
+        for filename in tar_files:
+            print(f"TAR: {filename}")
+        print()
+    if gz_files:
+        for filename in gz_files:
+            print(f"GZ: {filename}")
+        print()
+    if zip_files:
+        for filename in zip_files:
+            print(f"ZIP: {filename}")
+        print()
+    if others:
+        for filename in others:
+            print(f"UNKNOWN: {filename}")
+        print()
+    print(f"All extensions: {extensions}\n")
+    print(f"Unknown extensions: {unknown}\n")
 
 
-def extract_archives_recursive(folder_path):
-    for root, dirs, files in os.walk(folder_path):
+def extract_archives_recursive(folder):
+    for root, dirs, files in os.walk(folder):
         for file_name in files:
             file_path = os.path.join(root, file_name)
             try:
@@ -193,36 +227,11 @@ def extract_archives_recursive(folder_path):
             except Exception as e:
                 print(f"Failed to extract {file_path}: {e}")
 
-
-if __name__ == '__main__':
-    path = sys.argv[1]
-    print(f"Start in {path}")
-
-    arg = Path(path)
-
-    extract_archives_recursive(path)
     print("Archives extracted.")
 
-UKRAINIAN_SYMBOLS = 'абвгдеєжзиіїйклмнопрстуфхцчшщьюя'
-TRANSLATION = ("a", "b", "v", "g", "d", "e", "je", "zh", "z", "y", "i", "ji", "j", "k", "l", "m", "n", "o", "p",
-               "r", "s", "t", "u", "f", "h", "ts", "ch", "sh", "sch", "", "ju", "ja")
-SPECIAL_CHARACTERS = set('!@#$%^&*()_+{}[]|\:;"<>,.?/~`')
-TRANS = {}
 
-for key, value in zip(UKRAINIAN_SYMBOLS, TRANSLATION):
-    TRANS[ord(key)] = value
-    TRANS[ord(key.upper())] = value.upper()
-
-
-def normalize(name):
-    name, *extension = name.split('.')
-    new_name = name.translate(TRANS)
-    new_name = re.sub(r"\W+", "_", new_name)
-    return f"{new_name}.{'.'.join(extension)}"
-
-
-def rename_files_recursively(folder_path):
-    for root, dirs, files in os.walk(folder_path):
+def rename_files_recursively(folder):
+    for root, dirs, files in os.walk(folder):
         for filename in files:
             old_path = os.path.join(root, filename)
 
@@ -256,46 +265,30 @@ def rename_files_recursively(folder_path):
             print(f"Normalized {filename} to {new_name}")
 
 
-if __name__ == '__main__':
-    path = sys.argv[1]
-    print(f"Start in {path}")
-    arg = Path(path)
-    rename_files_recursively(path)
-
-
-def find_duplicate_files(folder_path):
+def find_duplicate_files(folder):
     file_dict = defaultdict(list)
 
-    for root, dirs, files in os.walk(folder_path):
+    for root, dirs, files in os.walk(folder):
         for filename in files:
             file_path = os.path.join(root, filename)
             file_dict[filename].append(file_path)
 
     duplicate_files = {name: paths for name, paths in file_dict.items() if len(paths) > 1}
 
-    return duplicate_files
-
-
-if __name__ == '__main__':
-    path = sys.argv[1]
-    print(f"Start in {path}")
-    arg = Path(path)
-    duplicates = find_duplicate_files(path)
-
-    if not duplicates:
+    if not duplicate_files:
         print("No duplicate files found.")
     else:
         print("Duplicate files:")
-        for name, paths in duplicates.items():
+        for name, paths in duplicate_files.items():
             print(f"Filename: {name}")
             for path in paths:
                 print(f"  Path: {path}")
 
 
-def rename_duplicate_files(folder_path):
+def rename_duplicate_files(folder):
     file_dict = defaultdict(list)
 
-    for root, dirs, files in os.walk(folder_path):
+    for root, dirs, files in os.walk(folder):
         for filename in files:
             file_path = os.path.join(root, filename)
             file_dict[filename].append(file_path)
@@ -328,55 +321,13 @@ def rename_duplicate_files(folder_path):
 
         file_dict.clear()
 
-        for root, dirs, files in os.walk(folder_path):
+        for root, dirs, files in os.walk(folder):
             for filename in files:
                 file_path = os.path.join(root, filename)
                 file_dict[filename].append(file_path)
 
 
-if __name__ == '__main__':
-    path = sys.argv[1]
-    print(f"Start in {path}")
-    arg = Path(path)
-    rename_duplicate_files(path)
-
-registered_extensions = {
-    "JPEG": "JPEG",
-    "PNG": "PNG",
-    "JPG": "JPG",
-    "SVG": "SVG",
-    "TXT": "TXT",
-    "DOCX": "DOCX",
-    "DOC": "DOC",
-    "XLSX": "XLSX",
-    "XLS": "XLS",
-    "PDF": "PDF",
-    "PPTX": "PPTX",
-    "ZIP": "ZIP",
-    "GZ": "GZ",
-    "TAR": "TAR",
-    "AVI": "AVI",
-    "MOV": "MOV",
-    "MKV": "MKV",
-    "MP4": "MP4"
-}
-
-
-def create_folder_if_not_exists(folder_path):
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
-
-def get_extensions(file_name):
-    return Path(file_name).suffix[1:].upper()
-
-
-def move_file_to_folder(source_path, target_folder):
-    target_path = os.path.join(target_folder, source_path.name)
-    os.rename(source_path, target_path)
-
-
-def scan_and_move(folder, target_root_folder):
+def scan_and_move(folder, target_root_folder, is_last_call=False):
     for item in folder.iterdir():
         # if item.is_dir():
         #     if item.name not in registered_extensions.values(): # ТАК ІГНОРУЄ ІСНУЮЧІ ПАПКИ З РОЗШИРЕННЯМИ
@@ -390,24 +341,16 @@ def scan_and_move(folder, target_root_folder):
         if not extension:
             continue
 
-        target_folder = os.path.join(target_root_folder, registered_extensions.get(extension, "OTHER"))
+        target_folder = os.path.join(target_root_folder, join_extensions.get(extension, "OTHER"))
         create_folder_if_not_exists(target_folder)
 
         move_file_to_folder(item, target_folder)
+    if is_last_call:
+        print("Files moved and organized into folders.")
 
 
-if __name__ == '__main__':
-    path = sys.argv[1]
-    print(f"Start in {path}")
-
-    arg = Path(path)
-    scan_and_move(arg, path)
-
-    print("Files moved and organized into folders.")
-
-
-def remove_empty_folders_recursive(folder_path):
-    for root, dirs, files in os.walk(folder_path, topdown=False):
+def remove_empty_folders_recursive(folder):
+    for root, dirs, files in os.walk(folder, topdown=False):
         for dir_name in dirs:
             dir_path = os.path.join(root, dir_name)
             try:
@@ -415,14 +358,13 @@ def remove_empty_folders_recursive(folder_path):
                 print(f"Removed empty folder: {dir_path}")
             except OSError:
                 pass
+    print("Empty folders removed.")
 
 
 if __name__ == '__main__':
     path = sys.argv[1]
     print(f"Start in {path}")
     arg = Path(path)
-    remove_empty_folders_recursive(path)
-    print("Empty folders removed.")
-print()
-print("Organize process successfully finished!")
-
+    main()
+    print()
+    print("Organize process successfully finished!")
