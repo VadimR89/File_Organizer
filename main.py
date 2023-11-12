@@ -4,6 +4,7 @@ import sys
 import re
 from collections import defaultdict
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 jpeg_files = list()
 png_files = list()
@@ -79,6 +80,31 @@ for key, value in zip(UKRAINIAN_SYMBOLS, TRANSLATION):
     TRANS[ord(key)] = value
     TRANS[ord(key.upper())] = value.upper()
 
+"""___"""
+
+
+def process_file(file_path, target_root_folder):
+    extension = get_extensions(file_name=file_path.name)
+    if not extension:
+        return
+
+    target_folder = os.path.join(target_root_folder, join_extensions.get(extension, "OTHER"))
+    create_folder_if_not_exists(target_folder)
+
+    move_file_to_folder(file_path, target_folder)
+
+
+def process_directory(directory_path, target_root_folder):
+    with ThreadPoolExecutor() as executor:
+        for item in directory_path.iterdir():
+            if item.is_dir():
+                executor.submit(process_directory, item, target_root_folder)  # Process subdirectories in parallel
+            else:
+                executor.submit(process_file, item, target_root_folder)  # Process files in parallel
+
+
+"""___"""
+
 
 def main():
     scan(arg)
@@ -89,6 +115,20 @@ def main():
     rename_duplicate_files(arg)
     scan_and_move(arg, path, is_last_call=True)
     remove_empty_folders_recursive(arg)
+
+    """Paralleling"""
+    with ThreadPoolExecutor() as executor:
+        # executor.submit(scan, arg)
+        # executor.submit(scan_result)
+        # executor.submit(extract_archives_recursive, arg)
+        # executor.submit(rename_files_recursively, arg)
+        # executor.submit(find_duplicate_files, arg)
+        # executor.submit(rename_duplicate_files, arg)
+        executor.submit(scan_and_move, arg, path, True)
+        # executor.submit(remove_empty_folders_recursive, arg)
+
+    print("Processing complete.")
+    """___"""
 
 
 def get_extensions(file_name):
